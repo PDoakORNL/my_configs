@@ -11,11 +11,12 @@
 
 (setq radian-disabled-packages
       '(haskell-mode
+        lsp-haskel
         emacsql-sqlite
         forge))
 
 
-;; (setq straight-vc-git-default-protocol ...)
+;; (setq straight-vc-git-default-protocol ssh)
 ;; (setq straight-check-for-modifications ...))
 (radian-local-on-hook before-straight
   nil)
@@ -41,22 +42,51 @@
               ((file-directory-p (vertico--candidate)) (vertico-insert))
               (t (self-insert-command 1 ?/)))))
     :bind (:map vertico-map
-                ("/" . #'my/vertico-insert)))
+                ;;                ("/" . #'vertico-insert)
+                ("?" . #'minibuffer-completion-help)
+                ("M-RET" . #'minibuffer-force-complete-and-exit)
+                ("M-TAB" . #'minibuffer-complete)))
 
   ;; Configure directory extension.
-  (radian-use-package vertico-directory
-    :after vertico
-    :ensure t
-    :demand
-    ;; More convenient directory navigation commands
-    :bind (:map vertico-map
-                ("RET"   . vertico-directory-enter)
-                ("DEL"   . vertico-directory-delete-char)
-                ("M-DEL" . vertico-directory-delete-word))
-    ;; Tidy shadowed file names
-    :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
   (setq make-backup-files t)
   (setq auto-save-default t)
-  (setq create-lockfiles t))
+  (setq create-lockfiles t)
+  (radian-use-package vterm)
+  (radian-use-package visual-regexp-steroids
+    :config
+    (setq vr/engine 'pcre))
+
+  (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
+  (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")
+  (require 'qmcpack-style)
+  (require 'dca-style)
+  ;;  (require 'mrpapp-style)
+  (use-feature cc-mode
+    :config
+
+    (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
+      :override #'c-update-modeline
+      "Unconditionally inhibit CC submode indicators in the mode lighter.")
+
+    ;; This style is only used for languages which do not have
+    ;; a more specific style set in `c-default-style'.
+    (setf (map-elt c-default-style 'other) "qmcpack")
+
+    (put 'c-default-style 'safe-local-variable #'stringp))
+  (radian-use-package lsp-ui
+    :bind (("s-g" . #'lsp-ui-peek-find-definitions)
+           ("s-r" . #'lsp-ui-peek-find-references)
+           ("s-i" . #'lsp-ui-peek-find-implementation))
+
+    )
+  ;; Support super alphabet combinations for iterm2
+  (cl-loop for char from ?a to ?z
+           do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
+  (add-hook
+   'c++-mode-hook
+   (lambda ()
+     (local-set-key (kbd "RET") #'c-indent-new-comment-line))
+   )
+  )
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'
