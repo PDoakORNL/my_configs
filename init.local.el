@@ -44,19 +44,23 @@
                 ("/" . #'my/vertico-insert)))
 
   ;; Configure directory extension.
-  (radian-use-package vertico-directory
-    :after vertico
-    :ensure t
-    :demand
-    ;; More convenient directory navigation commands
-    :bind (:map vertico-map
-                ("RET"   . vertico-directory-enter)
-                ("DEL"   . vertico-directory-delete-char)
-                ("M-DEL" . vertico-directory-delete-word))
-    ;; Tidy shadowed file names
-    :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
   (setq make-backup-files t)
   (setq auto-save-default t)
-  (setq create-lockfiles t))
+  (setq create-lockfiles t)
+  (radian-use-package vterm)
+  ;;  (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
+  ;; (add-hook 'vterm-mode-hook
+  ;;           (lambda ()
+  ;;             (set (make-local-variable 'buffer-face-mode-face) 'fixed-pitch)
+  ;;             (buffer-face-mode t)))
+
+  (when (radian-operating-system-p darwin)
+    (setq mac-option-modifier 'super)
+    (setq mac-command-modifier 'control)
+    (setq mac-control-modifier 'meta)
+    (global-set-key [kp-delete] 'delete-char)) ;; sets fn-delete to be right-delete
+  )
+
+
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'

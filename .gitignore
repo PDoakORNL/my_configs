@@ -1,0 +1,19 @@
+*.pyc
+*.aux
+.DS_Store
+/build_*/
+# Eclipse IDE
+.cproject
+.project
+.settings/
+.pydevproject
+
+# Visual Studio code settings
+.vscode/
+.cache/
+
+# IDE generated files and folders
+*~
+*#
+*.swp
+.idea

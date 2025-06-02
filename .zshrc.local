@@ -3,6 +3,10 @@
 autoload -Uz promptinit
 promptinit
 prompt adam1
+||||||| parent of c8da209 (files from the osx side initial)
+
+# # >>> conda initialize >>>
+ZSH_DISABLE_COMPFIX="true"
 
 setopt histignorealldups sharehistory
 
