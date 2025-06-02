@@ -63,7 +63,6 @@
   ;;  (require 'mrpapp-style)
   (use-feature cc-mode
     :config
-
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
       :override #'c-update-modeline
       "Unconditionally inhibit CC submode indicators in the mode lighter.")
@@ -71,13 +70,15 @@
     ;; This style is only used for languages which do not have
     ;; a more specific style set in `c-default-style'.
     (setf (map-elt c-default-style 'other) "qmcpack")
+    (put 'c-default-style 'safe-local-variable #'stringp)
+    ;; (add-to-list 'sp-ignore-modes-list #'c-mode)
+    ;; (add-to-list 'sp-ignore-modes-list #'c++-mode)
+    )
 
-    (put 'c-default-style 'safe-local-variable #'stringp))
   (radian-use-package lsp-ui
     :bind (("s-g" . #'lsp-ui-peek-find-definitions)
            ("s-r" . #'lsp-ui-peek-find-references)
            ("s-i" . #'lsp-ui-peek-find-implementation))
-
     )
   ;; Support super alphabet combinations for iterm2
   (unless (display-graphic-p)
@@ -93,7 +94,15 @@
     (setq mac-option-modifier 'super)
     (setq mac-command-modifier 'control)
     (setq mac-control-modifier 'meta)
-    (global-set-key [kp-delete] 'delete-char)) ;; sets fn-delete to be right-delete
+    (global-set-key [kp-delete] 'delete-char))
+
+  (radian-use-package smartparens
+    :demand t
+    :config
+    (sp-local-pair 'c++-mode "\"" nil :actions '(:rem insert escape))
+    (sp-local-pair 'c++-mode "(" nil :when '(sp-point-before-eol-p))
+    (sp-local-pair 'c++-mode "{" nil :when '(sp-point-before-eol-p))
+    )
   )
 
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
