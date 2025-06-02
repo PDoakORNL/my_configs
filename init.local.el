@@ -80,13 +80,21 @@
 
     )
   ;; Support super alphabet combinations for iterm2
-  (cl-loop for char from ?a to ?z
-           do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
-  (add-hook
-   'c++-mode-hook
-   (lambda ()
-     (local-set-key (kbd "RET") #'c-indent-new-comment-line))
-   )
+  (unless (display-graphic-p)
+    (cl-loop for char from ?a to ?z
+             do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
+    (add-hook
+     'c++-mode-hook
+     (lambda ()
+       (local-set-key (kbd "RET") #'c-indent-new-comment-line))
+     )
+    )
+  (when (radian-operating-system-p darwin)
+    (setq mac-option-modifier 'super)
+    (setq mac-command-modifier 'control)
+    (setq mac-control-modifier 'meta)
+    (global-set-key [kp-delete] 'delete-char)) ;; sets fn-delete to be right-delete
   )
+
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'

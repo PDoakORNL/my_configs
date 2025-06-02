@@ -3,6 +3,7 @@
 autoload -Uz promptinit
 promptinit
 prompt adam1
+||||||| parent of c8da209 (files from the osx side initial)
 
 setopt histignorealldups sharehistory
 

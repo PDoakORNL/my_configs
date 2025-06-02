@@ -25,3 +25,5 @@ fi
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
+
+export HOMEBREW_TEMP=/Users/Shared/ornldev/projects/brew_temp
