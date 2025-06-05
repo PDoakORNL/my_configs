@@ -73,23 +73,25 @@
     (put 'c-default-style 'safe-local-variable #'stringp)
     ;; (add-to-list 'sp-ignore-modes-list #'c-mode)
     ;; (add-to-list 'sp-ignore-modes-list #'c++-mode)
+    (add-hook
+     'c++-mode-hook
+     (lambda ()
+       (local-set-key (kbd "M-RET") #'c-indent-new-comment-line)
+       )
+     )
     )
 
   (radian-use-package lsp-ui
     :bind (("s-g" . #'lsp-ui-peek-find-definitions)
-           ("s-r" . #'lsp-ui-peek-find-references)
-           ("s-i" . #'lsp-ui-peek-find-implementation))
+	   ("s-r" . #'lsp-ui-peek-find-references)
+	   ("s-i" . #'lsp-ui-peek-find-implementation))
     )
   ;; Support super alphabet combinations for iterm2
   (unless (display-graphic-p)
     (cl-loop for char from ?a to ?z
              do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
-    (add-hook
-     'c++-mode-hook
-     (lambda ()
-       (local-set-key (kbd "RET") #'c-indent-new-comment-line))
-     )
     )
+
   (when (radian-operating-system-p darwin)
     (setq mac-option-modifier 'super)
     (setq mac-command-modifier 'control)
