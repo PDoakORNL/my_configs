@@ -77,10 +77,13 @@
      'c++-mode-hook
      (lambda ()
        (local-set-key (kbd "M-RET") #'c-indent-new-comment-line)
-       )
+       (sp-local-pair 'c++-mode "\"" nil :when '(sp-point-before-eol-p))
+       (sp-local-pair 'c++-mode "/*" "*/" :actions '(:rem navigate autoskip) :post-handlers nil)
+       (sp-local-pair 'c++-mode "(" nil :when '(sp-point-before-eol-p))
+       (sp-local-pair 'c++-mode "{" nil :when '(sp-point-before-eol-p))
+       (electric-pair-mode -1))
      )
     )
-
   (radian-use-package lsp-ui
     :bind (("s-g" . #'lsp-ui-peek-find-definitions)
 	   ("s-r" . #'lsp-ui-peek-find-references)
@@ -98,14 +101,6 @@
     (setq mac-control-modifier 'meta)
     (global-set-key [kp-delete] 'delete-char))
 
-  (radian-use-package smartparens
-    :demand t
-    :config
-    (sp-local-pair 'c++-mode "\"" nil :actions '(:rem insert escape))
-    (sp-local-pair 'c++-mode "(" nil :when '(sp-point-before-eol-p))
-    (sp-local-pair 'c++-mode "{" nil :when '(sp-point-before-eol-p))
-    )
   )
-
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'
