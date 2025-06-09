@@ -56,8 +56,11 @@
     :config
     (setq vr/engine 'pcre))
 
-  (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
-  (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")
+  (cond ((radian-operating-system-p macOS)
+         (add-to-list 'load-path "/Users/Shared/ornldev/code/qmcpack/utils/code_tools")
+         (add-to-list 'load-path "/Users/Shared/ornldev/code/DCA-2/tools/emacs"))
+        (t (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
+           (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")))
   (require 'qmcpack-style)
   (require 'dca-style)
   ;;  (require 'mrpapp-style)
@@ -88,13 +91,15 @@
      (lambda ()
        (local-set-key (kbd "RET") #'c-indent-new-comment-line))
      )
-    )
-  (when (radian-operating-system-p darwin)
-    (setq mac-option-modifier 'super)
-    (setq mac-command-modifier 'control)
-    (setq mac-control-modifier 'meta)
-    (global-set-key [kp-delete] 'delete-char)) ;; sets fn-delete to be right-delete
-  )
+    ))
+(when (radian-operating-system-p macOS)
+  (setq mac-option-modifier 'super)
+  (setq mac-command-modifier 'control)
+  (setq mac-control-modifier 'meta)
+  (global-set-key [kp-delete] 'delete-char)
+  (global-set-key [home] 'beginning-of-line-text)
+  (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be right-delete
+
 
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'
