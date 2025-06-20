@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 :;; placeholder init.local.el
 ;; code that should be run at the very beginning of init, e.g.
 
@@ -15,13 +16,12 @@
         emacsql-sqlite
         forge))
 
-
 ;; (setq straight-vc-git-default-protocol ssh)
 ;; (setq straight-check-for-modifications ...))
 (radian-local-on-hook before-straight
-  nil)
-
-
+  (setq straight-recipes-gnu-elpa-use-mirror t)
+  ;; (setq straight-check-for-modifications t)
+  )
 
 (radian-local-on-hook after-init
   ;; code that should be run at the end of init, e.g.
@@ -51,7 +51,12 @@
   (setq make-backup-files t)
   (setq auto-save-default t)
   (setq create-lockfiles t)
-  (radian-use-package vterm)
+  (radian-use-package vterm
+    :config
+    (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
+    (setq vterm-copy-exclude-prompt t)
+    (setq vterm-copy-mode-remove-fake-newlines t)
+    )
   (radian-use-package visual-regexp-steroids
     :config
     (setq vr/engine 'pcre))
@@ -89,6 +94,16 @@
 	   ("s-r" . #'lsp-ui-peek-find-references)
 	   ("s-i" . #'lsp-ui-peek-find-implementation))
     )
+
+  (radian-use-package ts-mode)
+  (radian-use-package awk-ts-mode)
+  (radian-use-package llvm-ts-mode)
+  (radian-use-package perl-ts-mode)
+  (radian-use-package julia-ts-mode
+    :ensure t
+    :mode "\\.jl$")
+  (radian-use-package elisp-tree-sitter)
+
   ;; Support super alphabet combinations for iterm2
   (unless (display-graphic-p)
     (cl-loop for char from ?a to ?z
