@@ -95,14 +95,23 @@
 	   ("s-i" . #'lsp-ui-peek-find-implementation))
     )
 
-  (radian-use-package ts-mode)
-  (radian-use-package awk-ts-mode)
-  (radian-use-package llvm-ts-mode)
-  (radian-use-package perl-ts-mode)
-  (radian-use-package julia-ts-mode
-    :ensure t
-    :mode "\\.jl$")
-  (radian-use-package elisp-tree-sitter)
+  ;; (radian-use-package ts-mode)
+  (radian-use-package awk-ts-mode
+    :straight (:host github :repo "nverno/awk-ts-mode")
+    :config (add-to-list 'treesit-language-source-alist
+                         '(awk "https:/github.com/Beaglefoot/tree-sitter-awk"))
+    )
+  ;; (radian-use-package llvm-ts-mode)
+  ;; (radian-use-package perl-ts-mode)
+  ;; (radian-use-package julia-ts-mode
+  ;;   :ensure t
+  ;;   :mode "\\.jl$")
+  ;; (radian-use-package elisp-tree-sitter)
+
+  (radian-use-package cmake-format
+    :straight (:host github :repo "simonfxr/cmake-format.el")
+    :config (setq cmake-format-command "/raid/epd/spack/opt/spack/linux-skylake_avx512/python-venv-1.0-wrt32qougdv3znh6uenxavhttyk3ttcg/bin/cmake-format"
+                  cmake-format-args '("-i")))
 
   ;; Support super alphabet combinations for iterm2
   (unless (display-graphic-p)
@@ -115,6 +124,8 @@
     (setq mac-command-modifier 'control)
     (setq mac-control-modifier 'meta)
     (global-set-key [kp-delete] 'delete-char))
+
+
 
   )
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
