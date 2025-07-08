@@ -30,4 +30,9 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# set PATH so it includes homebrew sbin
+if [ -d /usr/local/sbin ] ; then
+    PATH="/usr/local/sbin:$PATH"
+fi
+
 export HOMEBREW_TEMP=/Users/Shared/ornldev/projects/brew_temp

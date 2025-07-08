@@ -91,15 +91,15 @@
      (lambda ()
        (local-set-key (kbd "RET") #'c-indent-new-comment-line))
      )
-    ))
-(when (radian-operating-system-p macOS)
-  (setq mac-option-modifier 'super)
-  (setq mac-command-modifier 'control)
-  (setq mac-control-modifier 'meta)
-  (global-set-key [kp-delete] 'delete-char)
-  (global-set-key [home] 'beginning-of-line-text)
-  (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be right-delete
-
+    )
+  (when (radian-operating-system-p macOS)
+    (setq mac-command-modifier 'control)
+    (setq mac-control-modifier 'meta)
+    (setq mac-option-modifier 'super)
+    (global-set-key [kp-delete] 'delete-char)
+    (global-set-key [home] 'beginning-of-line-text)
+    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be right-delete
+  )
 
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'
