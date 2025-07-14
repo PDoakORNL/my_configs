@@ -98,7 +98,16 @@
     (setq mac-option-modifier 'super)
     (global-set-key [kp-delete] 'delete-char)
     (global-set-key [home] 'beginning-of-line-text)
-    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be right-delete
+    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be
+  ;; right-delete
+
+  (use-package org
+    :bind(:map org-mode-map
+               ("C-S-<left>" . #'org-shiftleft)
+               ("C-S-<right>" . #'org-shiftright))
+    :config
+    (setq org-clock-idle-time 10)
+    (setq org-clock-continuously t))
   )
 
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
