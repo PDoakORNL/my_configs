@@ -48,10 +48,16 @@ vterm_prompt_end() {
 # Completely clear the buffer. With this, everything that is not on screen
 # is erased.
 radian_after_init_hook() {
-    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    if [[ "$INSIDE_EMACS" == 'vterm' ]]; then
       alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
       PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
     fi
     alias hig="history | grep"
     alias nwemacs='TERM=xterm-24bits emacs -nw'
+
+    if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
+        source /etc/zsh.zshrc.local
+    fi
 }
+export PATH=~/.local/share/znap/junegunn/fzf/bin:/ccs/home/pdoak/.local/share/znap/junegunn/fzf/bin:/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/zsh-5.9-h4blbp5thq7y7ha7qlao3ja67kz7pxk6/bin:/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/ncurses-6.5-qplgsljiw6l2vsn5h7hyzmjtliyz2g3n/bin:/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/pcre-8.45-tbat3uk7catgjtlydl6c4qguyevhyfbt/bin:/lustre/orion/cph102/proj-shared/epd/fresh-spack/bin:/sw/frontier/lfs-wrapper/0.0.1/bin/lfs:/sw/sources/hpss/bin:/sw/frontier/spack-envs/cpe24.11-cpu/opt/cce-18.0.1/darshan-runtime-3.4.6-ymnx2jlqwdsmjgdiu6ldpyxmcenq2nks/bin:/sw/frontier/spack-envs/core-25.03/opt/gcc-13.2/tmux-3.4-fcqqko3j4ga67yuc7zxaqcwsix5hns2v/bin:/opt/cray/pe/mpich/8.1.31/ofi/crayclang/17.0/bin:/opt/cray/pe/mpich/8.1.31/bin:/opt/cray/pe/craype/2.7.33/bin:/opt/cray/pe/cce/18.0.1/binutils/x86_64/x86_64-pc-linux-gnu/bin:/opt/cray/pe/cce/18.0.1/binutils/cross/x86_64-aarch64/aarch64-linux-gnu/../bin:/opt/cray/pe/cce/18.0.1/utils/x86_64/bin:/opt/cray/pe/cce/18.0.1/bin:/opt/cray/pe/perftools/24.11.0/bin:/opt/cray/pe/papi/7.1.0.4/bin:/opt/cray/libfabric/1.22.0/bin:/opt/clmgr/sbin:/opt/clmgr/bin:/opt/sgi/sbin:/opt/sgi/bin:/sw/frontier/bin:/ccs/home/pdoak/.local/bin:/ccs/home/pdoak/bin:/usr/local/bin:/usr/bin:/bin:/opt/bin:/opt/c3/bin:/usr/lib/mit/bin:/opt/puppetlabs/bin:/opt/cray/pe/bin:/autofs/nccs-svm1_home1/pdoak/.local/share/znap/radian-software/wdx/bin
+source <(fzf --zsh)
