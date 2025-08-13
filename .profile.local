@@ -18,4 +18,8 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# We need a currect zsh in the path
+
+PATH="/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin:$PATH"
+
 TERMINFO=$HOME/.terminfo
