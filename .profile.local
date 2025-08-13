@@ -20,6 +20,10 @@ fi
 
 # We need a currect zsh in the path
 
-PATH="/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin:$PATH"
+if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
+    PATH="/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/zsh-5.9.0.2-tm5phpzrwwohrsxgo274j32vxioblkqj/bin:${PATH}"
+else
+    PATH="/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin:$PATH"
+fi
 
 TERMINFO=$HOME/.terminfo

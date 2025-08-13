@@ -53,12 +53,19 @@ radian_after_init_hook() {
       PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
     fi
     alias hig="history | grep"
-    alias nwemacs='TERM=xterm-24bit emacs -nw'
+
+    if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
+        alias nwemacs='TERM=xterm-24bits emacs -nw'
+    else
+        alias nwemacs='TERM=xterm-24bit emacs -nw'
+    fi
 
     if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
         source /etc/zsh.zshrc.local
+	. $PROJWORK/cph102/epd/fresh-spack/share/spack/setup-env.sh
+    else
+        . /raid/epd/spack/share/spack/setup-env.sh
     fi
-    . /raid/epd/spack/share/spack/setup-env.sh
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     source <(fzf --zsh)   
 }
