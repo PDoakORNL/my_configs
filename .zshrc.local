@@ -61,7 +61,9 @@ radian_after_init_hook() {
     fi
 
     if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
-        source /etc/zsh.zshrc.local
+	fpath=( $fpath /etc/zsh_completion.d )
+        autoload -U bashcompinit
+        bashcompinit
 	. $PROJWORK/cph102/epd/fresh-spack/share/spack/setup-env.sh
     else
         . /raid/epd/spack/share/spack/setup-env.sh
