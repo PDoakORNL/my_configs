@@ -66,7 +66,9 @@ radian_after_init_hook() {
         bashcompinit
 	. $PROJWORK/cph102/epd/fresh-spack/share/spack/setup-env.sh
     else
-        . /raid/epd/spack/share/spack/setup-env.sh
+        autoload -U bashcompinit
+        bashcompinit
+	. /raid/epd/spack/share/spack/setup-env.sh
     fi
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     source <(fzf --zsh)   
