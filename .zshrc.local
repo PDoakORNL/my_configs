@@ -3,12 +3,9 @@
 # shell to send information to `vterm` via properly escaped sequences. A
 # function that helps in this task, `vterm_printf`, is defined below.
 
-function vterm_printf(){
-    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
-
-autoload -Uz promptinit
-promptinit
-prompt adam1
+# autoload -Uz promptinit
+# promptinit
+# prompt adam1
 
 alias hig="history | grep"
 alias githubUp='ssh -fN -L 4444:ssh.github.com:443 login'
@@ -63,7 +60,7 @@ vterm_prompt_end() {
 # Completely clear the buffer. With this, everything that is not on screen
 # is erased.
 radian_after_init_hook() {
-    if [[ "$INSIDE_EMACS" == 'vterm' ]]; then
+    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
       alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
       PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
     fi
@@ -83,8 +80,13 @@ radian_after_init_hook() {
     else
         autoload -U bashcompinit
         bashcompinit
-	. /raid/epd/spack/share/spack/setup-env.sh
+	# . /raid/epd/spack/share/spack/setup-env.sh
     fi
+
+    if [[ $(hostname -d) = "sns.gov" ]]; then
+        . /raid/epd/spack/share/spack/setup-env.sh
+    fi
+
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     source <(fzf --zsh)
 }

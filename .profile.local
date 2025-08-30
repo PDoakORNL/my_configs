@@ -16,7 +16,7 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
-if [[ $(hostname -d) == "mac117825" ]]
+if [[ $(hostname -d) = "mac117825" ]]
    if [ -d "/Applications/Emacs.app/Contents/MacOS/bin" ]; then
        export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
    fi
