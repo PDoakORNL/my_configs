@@ -65,8 +65,11 @@
     :config
     (setq vr/engine 'pcre))
 
-  (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
-  (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")
+  (cond ((radian-operating-system-p macOS)
+         (add-to-list 'load-path "/Users/Shared/ornldev/code/qmcpack/utils/code_tools")
+         (add-to-list 'load-path "/Users/Shared/ornldev/code/DCA-2/tools/emacs"))
+        (t (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
+           (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")))
   (require 'qmcpack-style)
   (require 'dca-style)
   ;;  (require 'mrpapp-style)
@@ -122,15 +125,23 @@
     (cl-loop for char from ?a to ?z
              do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
     )
-
   (when (radian-operating-system-p darwin)
-    (setq mac-option-modifier 'super)
     (setq mac-command-modifier 'control)
     (setq mac-control-modifier 'meta)
-    (global-set-key [kp-delete] 'delete-char))
+    (setq mac-option-modifier 'super)
+    (global-set-key [kp-delete] 'delete-char)
+    (global-set-key [home] 'beginning-of-line-text)
+    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be
+  ;; right-delete
 
-
-
+  (use-package org
+    :bind(:map org-mode-map
+               ("C-S-<left>" . #'org-shiftleft)
+               ("C-S-<right>" . #'org-shiftright))
+    :config
+    (setq org-clock-idle-time 10)
+    (setq org-clock-continuously t))
   )
+
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'

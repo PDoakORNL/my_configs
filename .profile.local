@@ -8,14 +8,30 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+    fi
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+if [[ $(hostname -d) == "mac117825" ]]
+   if [ -d "/Applications/Emacs.app/Contents/MacOS/bin" ]; then
+       export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
+   fi
+
+   # set PATH so it includes user's private bin if it exists
+   if [ -d "$HOME/bin" ] ; then
+       PATH="$HOME/bin:$PATH"
+   fi
+
+   # set PATH so it includes user's private bin if it exists
+   if [ -d "$HOME/.local/bin" ] ; then
+       PATH="$HOME/.local/bin:$PATH"
+   fi
+
+   export HOMEBREW_TEMP=/Users/Shared/ornldev/projects/brew_temp
 fi
 
 # We need a currect zsh in the path
@@ -27,3 +43,8 @@ else
 fi
 
 TERMINFO=$HOME/.terminfo
+
+# set PATH so it includes homebrew sbin
+if [ -d /usr/local/sbin ] ; then
+    PATH="/usr/local/sbin:$PATH"
+fi

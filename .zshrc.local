@@ -5,6 +5,21 @@
 
 function vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
+
+autoload -Uz promptinit
+promptinit
+prompt adam1
+
+alias hig="history | grep"
+alias githubUp='ssh -fN -L 4444:ssh.github.com:443 login'
+alias summitUp='ssh -fN -L 4447:summit.olcf.ornl.gov:22 login'
+alias condoUp='ssh -fN -L 4445:or-condo-login01.ornl.gov:22 login'
+alias nwemacs='TERM=xterm-24bit emacs -nw'
+
+vterm_printf() {
+    if [ -n "$TMUX" ] \
+        && { [ "${TERM%%-*}" = "tmux" ] \
+            || [ "${TERM%%-*}" = "screen" ]; }; then
         # Tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$1"
     elif [ "${TERM%%-*}" = "screen" ]; then
@@ -71,6 +86,5 @@ radian_after_init_hook() {
 	. /raid/epd/spack/share/spack/setup-env.sh
     fi
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
-    source <(fzf --zsh)   
+    source <(fzf --zsh)
 }
-
