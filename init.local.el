@@ -54,6 +54,10 @@
   (radian-use-package vterm
     :config
     (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
+    (define-key vterm-mode-map (kbd "<home>")
+                (lambda () (interactive) (vterm-send-string "\e[H")))
+    (define-key vterm-mode-map (kbd "<end>")
+                (lambda () (interactive) (vterm-send-string "\e[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
     )
