@@ -87,6 +87,11 @@ radian_after_init_hook() {
         . /raid/epd/spack/share/spack/setup-env.sh
     fi
 
+    bindkey '^[[H' beginning-of-line  # Home key
+    bindkey '^[[F' end-of-line        # End key
+    bindkey '^A' beginning-of-line    # Ctrl-A
+    bindkey '^E' end-of-line          # Ctrl-E
+
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     source <(fzf --zsh)
 }

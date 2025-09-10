@@ -16,6 +16,7 @@
         emacsql-sqlite
         forge))
 
+(setq radian-env-setup nil)
 ;; (setq straight-vc-git-default-protocol ssh)
 ;; (setq straight-check-for-modifications ...))
 (radian-local-on-hook before-straight
@@ -55,9 +56,9 @@
     :config
     (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
     (define-key vterm-mode-map (kbd "<home>")
-                (lambda () (interactive) (vterm-send-string "\e[H")))
+                (lambda () (interactive) (vterm-send-string "\033[H")))
     (define-key vterm-mode-map (kbd "<end>")
-                (lambda () (interactive) (vterm-send-string "\e[F")))
+                (lambda () (interactive) (vterm-send-string "\033[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
     )
@@ -141,7 +142,99 @@
     :config
     (setq org-clock-idle-time 10)
     (setq org-clock-continuously t))
+  (cond ((string-match "sdgx-server" (system-name)) (straight-use-package 'llm)
+         (radian-use-package ellama
+           :ensure t
+           :bind ("C-c e" . ellama)
+           ;; send last message in chat buffer with C-c C-c
+           :hook (org-ctrl-c-ctrl-c-final . ellama-chat-send-last-message)
+           :init
+           ;; setup key bindings
+           ;; (setopt ellama-keymap-prefix "C-c e")
+           ;; language you want ellama to translate to
+           (setopt ellama-language "English")
+           ;; customize display buffer behaviour
+           ;; see ~(info "(elisp) Buffer Display Action Functions")~
+           (setopt ellama-chat-display-action-function #'display-buffer-full-frame)
+           (setopt ellama-instant-display-action-function #'display-buffer-at-bottom)
+           :config
+           ;; could be llm-openai for example                                                       (require 'llm-openai)
+           (require 'llm-openai)
+           (setopt ellama-provider
+  	           (make-llm-openai-compatible
+  	            ;; this model should be pulled to use it
+  	            ;; value should be the same as you print in terminal during pull
+  	            :url "http://127.0.0.1:8080"
+                    :chat-model "Qwen3-Coder-480B-A35B-Instruct"))
+           ;; show ellama context in header line in all buffers
+           (ellama-context-header-line-global-mode +1)
+           ;; show ellama session id in header line in all buffers
+           (ellama-session-header-line-global-mode +1))))
+
+  (defun guess-all-hooks ()
+    "Return a list of all variables that are probably hook lists."
+    (let ((syms '()))
+      (mapatoms
+       (lambda (sym)
+         (if (ignore-errors (symbol-value sym))
+             (let ((name (symbol-name sym)))
+               (when (string-match "-hook\\(s\\)?\\|functions$" name)
+                 (push sym syms))))))
+      syms))
+
+  (defun face-it (str face)
+    "Apply FACE to STR and return."
+    (propertize str 'face face))
+
+  (defun describe-hook (hook)
+    "Display documentation about a hook variable and the
+functions it contains."
+    (interactive
+     (list (completing-read
+            "Hook: " (mapcar (lambda (x) (cons x nil)) (guess-all-hooks)))))
+    (let* ((sym (intern hook))
+           (sym-doc (documentation-property sym 'variable-documentation))
+           (hook-docs (mapcar
+                       (lambda (func)
+                         (cons func (ignore-errors (documentation func))))
+                       (symbol-value sym))))
+      (switch-to-buffer
+       (with-current-buffer (get-buffer-create "*describe-hook*")
+         (let ((inhibit-read-only t))
+           (delete-region (point-min) (point-max))
+           (insert (face-it "Hook: " 'font-lock-constant-face) "\n\n")
+           (insert (face-it (concat "`" hook "'") 'font-lock-variable-name-face))
+           ;; FROM-STRING TO-STRING &optional delimited start end
+           ;; backward regiond-non-contiguous-p
+           ;; (replace-string "\n" "\n\t" nil
+           ;;                 (point)
+           ;;                 (save-excursion
+           ;;                   (insert "\n" sym-doc "\n\n")
+           ;;                   (1- (point))))
+           (perform-replace "\n" "\n\t" nil nil nil nil nil
+                            (point)
+                            (save-excursion
+                              (insert "\n" sym-doc "\n\n")
+                              (1- (point))))
+           (goto-char (point-max))
+           (insert (face-it "Hook Functions: " 'font-lock-constant-face) "\n\n")
+           (dolist (hd hook-docs)
+             (insert (face-it (concat "`" (symbol-name (car hd)) "'")
+                              'font-lock-function-name-face)
+                     ": \n\t")
+             (perform-replace "\n" "\n\t" nil nil nil nil nil
+                              (point)
+                              (save-excursion
+                                (insert (or (cdr hd) "No Documentation") "\n\n")
+                                (1- (point))))
+             (goto-char (point-max))))
+         (help-mode)
+         (help-make-xrefs)
+         (read-only-mode t)
+         (setq truncate-lines nil)
+         (current-buffer)))))
   )
+
 
 ;; see M-x customize-group RET radian-hooks RET for which hooks you
 ;; can use with `radian-local-on-hook'
