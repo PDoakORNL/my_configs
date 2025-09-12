@@ -89,6 +89,8 @@ radian_after_init_hook() {
 
     bindkey '^[[H' beginning-of-line  # Home key
     bindkey '^[[F' end-of-line        # End key
+    bindkey '^[OH' beginning-of-line # Home again
+    bindkey '^[OF' end-of-line       # end again
     bindkey '^A' beginning-of-line    # Ctrl-A
     bindkey '^E' end-of-line          # Ctrl-E
 
