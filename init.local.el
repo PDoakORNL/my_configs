@@ -61,6 +61,13 @@
                 (lambda () (interactive) (vterm-send-string "\033[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
+    (let* ((vterm-shell-from-env (or (getenv "ZSH_EXEPATH")
+                                     (getenv "SHELL"))))
+      (setq vterm-shell vterm-shell-from-env))
+    (setq vterm-max-scrollback 100000)
+    (let* ((vterm-term-from-emacs-term (or (getenv "EMACS_TERM")
+                                           "xterm-256color")))
+      (setq vterm-term-environment-variable vterm-term-from-emacs-term))
     )
   (radian-use-package visual-regexp-steroids
     :config
