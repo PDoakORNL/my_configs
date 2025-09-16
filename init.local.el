@@ -240,6 +240,8 @@ functions it contains."
          (read-only-mode t)
          (setq truncate-lines nil)
          (current-buffer)))))
+
+  (setq compilation-skip-threshold 1)
   )
 
 
