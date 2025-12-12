@@ -110,6 +110,28 @@
 	   ("s-i" . #'lsp-ui-peek-find-implementation))
     )
 
+  ;; my lsp related functions
+  (defun clang-ast-dump ()
+    "Run clang-check -ast-dump with flags from .clangd + compile_commands.json."
+    (interactive)
+    (unless (buffer-file-name)
+      (user-error "Buffer must be visiting a file"))
+    (let* ((root (or (when (featurep 'lsp-mode) (projectile-project-root()))
+                     default-directory))
+           (clangd-config (expand-file-name ".clangd" root))
+           (extra-args   (gethash 'Add (gethash 'CompileFlags (let*
+                                                                  ((content
+                                                                    (with-temp-buffer
+                                                                      (insert-file-contents clangd-config)
+                                                                      (buffer-string))))
+                                                                (yaml-parse-string content)))))
+           (build-dir (projectile-project-root()))
+           (cmd (format "clang-check --extra-arg=\"%s\" -p %s -ast-dump %s"
+                        (mapconcat #'identity extra-args " ")
+                        (shell-quote-argument (expand-file-name "build" build-dir))
+                        (shell-quote-argument (buffer-file-name)))))
+      (compilation-start cmd nil (lambda (_) "*Clang AST*"))))
+
   ;; (radian-use-package ts-mode)
   (radian-use-package awk-ts-mode
     :straight (:host github :repo "nverno/awk-ts-mode")
@@ -148,7 +170,13 @@
                ("C-S-<right>" . #'org-shiftright))
     :config
     (setq org-clock-idle-time 10)
-    (setq org-clock-continuously t))
+    (setq org-clock-continuously t)
+    (org-babel-do-load-languages 'org-babel-load-languages
+                                 '((perl . t)
+                                   (emacs-lisp . t)
+                                   )))
+
+  ;; LLM setup for sdgx-server
   (cond ((string-match "sdgx-server" (system-name)) (straight-use-package 'llm)
          (radian-use-package ellama
            :ensure t
@@ -172,74 +200,154 @@
   	            ;; this model should be pulled to use it
   	            ;; value should be the same as you print in terminal during pull
   	            :url "http://127.0.0.1:8080"
-                    :chat-model "Qwen3-Coder-480B-A35B-Instruct"))
-           ;; show ellama context in header line in all buffers
-           (ellama-context-header-line-global-mode +1)
-           ;; show ellama session id in header line in all buffers
-           (ellama-session-header-line-global-mode +1))))
+                    :chat-model "Qwen3-Coder-480B-A35B-Instruct")))
+         ;; show ellama context in header line in all buffers
+         ;; (ellama-context-header-line-global-mode +1)
+         ;; ;; show ellama session id in header line in all buffers
+         ;; (ellama-session-header-line-global-mode +1))
+	 ;;  +1))
+         ;; (radian-use-package lsp-bridge
+         ;;   :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+         ;;                          :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+         ;;                          :build (:not compile))
+         ;;   :init
+         ;;   (global-lsp-bridge-mode)
+         ;;   :config
+         ;;   (setq lsp-bridge-enable-llm t)  ; Critical!
+         ;;   (setq lsp-bridge-llm-backend "codegeex") ; Or "codellama", "qwen", etc.
+         ;;   (setq lsp-bridge-semantic-tokens-enable t)
+         ;;   (setq lsp-bridge-semantic-tokens-max-file-size 1000)
+         ;;   (setq lsp-bridge-chat-max-tokens 8000))
 
-  (defun guess-all-hooks ()
-    "Return a list of all variables that are probably hook lists."
-    (let ((syms '()))
-      (mapatoms
-       (lambda (sym)
-         (if (ignore-errors (symbol-value sym))
-             (let ((name (symbol-name sym)))
-               (when (string-match "-hook\\(s\\)?\\|functions$" name)
-                 (push sym syms))))))
-      syms))
+	 (straight-use-package 'gptel)
+	 (radian-use-package gptel
+	   :straight (:host github :repo "karthink/gptel")
+           :bind ("C-c g m" . gptel-menu)
+	   :config
+           (gptel-make-openai "llama-cpp"
+             :stream t
+             :protocol "http"
+             :host "localhost:8080"
+             :models '(quen3))
+           (gptel-make-openai "vllm"
+             :stream t
+             :protocol "http"
+             :host "localhost:8000"
+             :models '(NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO))
+           (gptel-make-tool
+            :name "create-file"
+            :function (lambda (path filename content)
+                        (let ((full-path (expand-file-name filename path)))
+                          (with-temp-buffer
+                            (insert content)
+                            (write-file full-path))
+                          (format "Created file %s in %s" filename path)))
+            :description "Create a new file with the specified content"
+            :args (list '(:name "path"             ; a list of argument specifications
+	                        :type string
+	                        :description "The directory where to create the file")
+                        '(:name "filename"
+	                        :type string
+	                        :description "The name of the file to create")
+                        '(:name "content"
+	                        :type string
+	                        :description "The content to write to the file"))
+            :category "filesystem")
+           )))
+  ;; 1. Define function to load your .llm-context file
+  ;; (defun my/lsp-bridge-get-context ()
+  ;;   (when-let ((root (projectile-project-root)))
+  ;;     (let ((context-file (expand-file-name ".llm-context" root)))
+  ;;       (when (file-exists-p context-file)
+  ;;         ;; TRUNCATE to avoid token overflow (critical!)
+  ;;         (with-temp-buffer
+  ;;           (insert-file-contents context-file)
+  ;;           (buffer-substring-no-properties (point-min)
+  ;;                                           (min (point-max) (+ (point-min) 2000)))))))) ; Keep first 2000 chars
 
-  (defun face-it (str face)
-    "Apply FACE to STR and return."
-    (propertize str 'face face))
+  ;; ;; 2. Inject it into EVERY query
+  ;; (setq lsp-bridge-chat-prompts
+  ;;       (lambda () (concat (my/lsp-bridge-get-context) "\n\n" (buffer-substring-no-properties (point-min) (point-max)))))
+  ;; ))
+  ;; (defun guess-all-hooks ()
+  ;;   "Return a list of all variables that are probably hook lists."
+  ;;   (let ((syms '()))
+  ;;     (mapatoms
+  ;;      (lambda (sym)
+  ;;        (if (ignore-errors (symbol-value sym))
+  ;;            (let ((name (symbol-name sym)))
+  ;;              (when (string-match "-hook\\(s\\)?\\|functions$" name)
+  ;;                (push sym syms))))))
+  ;;     syms))
 
-  (defun describe-hook (hook)
-    "Display documentation about a hook variable and the
-functions it contains."
-    (interactive
-     (list (completing-read
-            "Hook: " (mapcar (lambda (x) (cons x nil)) (guess-all-hooks)))))
-    (let* ((sym (intern hook))
-           (sym-doc (documentation-property sym 'variable-documentation))
-           (hook-docs (mapcar
-                       (lambda (func)
-                         (cons func (ignore-errors (documentation func))))
-                       (symbol-value sym))))
-      (switch-to-buffer
-       (with-current-buffer (get-buffer-create "*describe-hook*")
-         (let ((inhibit-read-only t))
-           (delete-region (point-min) (point-max))
-           (insert (face-it "Hook: " 'font-lock-constant-face) "\n\n")
-           (insert (face-it (concat "`" hook "'") 'font-lock-variable-name-face))
-           ;; FROM-STRING TO-STRING &optional delimited start end
-           ;; backward regiond-non-contiguous-p
-           ;; (replace-string "\n" "\n\t" nil
-           ;;                 (point)
-           ;;                 (save-excursion
-           ;;                   (insert "\n" sym-doc "\n\n")
-           ;;                   (1- (point))))
-           (perform-replace "\n" "\n\t" nil nil nil nil nil
-                            (point)
-                            (save-excursion
-                              (insert "\n" sym-doc "\n\n")
-                              (1- (point))))
-           (goto-char (point-max))
-           (insert (face-it "Hook Functions: " 'font-lock-constant-face) "\n\n")
-           (dolist (hd hook-docs)
-             (insert (face-it (concat "`" (symbol-name (car hd)) "'")
-                              'font-lock-function-name-face)
-                     ": \n\t")
-             (perform-replace "\n" "\n\t" nil nil nil nil nil
-                              (point)
-                              (save-excursion
-                                (insert (or (cdr hd) "No Documentation") "\n\n")
-                                (1- (point))))
-             (goto-char (point-max))))
-         (help-mode)
-         (help-make-xrefs)
-         (read-only-mode t)
-         (setq truncate-lines nil)
-         (current-buffer)))))
+  ;; (defun face-it (str face)
+  ;;   "Apply FACE to STR and return."
+  ;;   (propertize str 'face face))
+
+  ;;   (defun describe-hook (hook)
+  ;;     "Display documentation about a hook variable and the
+  ;; functions it contains."
+  ;;     (interactive
+  ;;      (list (completing-read
+  ;;             "Hook: " (mapcar (lambda (x) (cons x nil)) (guess-all-hooks)))))
+  ;;     (let* ((sym (intern hook))
+  ;;            (sym-doc (documentation-property sym 'variable-documentation))
+  ;;            (hook-docs (mapcar
+  ;;                        (lambda (func)
+  ;;                          (cons func (ignore-errors (documentation func))))
+  ;;                        (symbol-value sym))))
+  ;;       (switch-to-buffer
+  ;;        (with-current-buffer (get-buffer-create "*describe-hook*")
+  ;;          (let ((inhibit-read-only t))
+  ;;            (delete-region (point-min) (point-max))
+  ;;            (insert (face-it "Hook: " 'font-lock-constant-face) "\n\n")
+  ;;            (insert (face-it (concat "`" hook "'") 'font-lock-variable-name-face))
+  ;;            ;; FROM-STRING TO-STRING &optional delimited start end
+  ;;            ;; backward regiond-non-contiguous-p
+  ;;            ;; (replace-string "\n" "\n\t" nil
+  ;;            ;;                 (point)
+  ;;            ;;                 (save-excursion
+  ;;            ;;                   (insert "\n" sym-doc "\n\n")
+  ;;            ;;                   (1- (point))))
+  ;;            (perform-replace "\n" "\n\t" nil nil nil nil nil
+  ;;                             (point)
+  ;;                             (save-excursion
+  ;;                               (insert "\n" sym-doc "\n\n")
+  ;;                               (1- (point))))
+  ;;            (goto-char (point-max))
+  ;;            (insert (face-it "Hook Functions: " 'font-lock-constant-face) "\n\n")
+  ;;            (dolist (hd hook-docs)
+  ;;              (insert (face-it (concat "`" (symbol-name (car hd)) "'")
+  ;;                               'font-lock-function-name-face)
+  ;;                      ": \n\t")
+  ;;              (perform-replace "\n" "\n\t" nil nil nil nil nil
+  ;;                               (point)
+  ;;                               (save-excursion
+  ;;                                 (insert (or (cdr hd) "No Documentation") "\n\n")
+  ;;                                 (1- (point))))
+  ;;              (goto-char (point-max))))
+  ;;          (help-mode)
+  ;;          (help-make-xrefs)
+  ;;          (read-only-mode t)
+  ;;          (setq truncate-lines nil)
+  ;;          (current-buffer)))))
+
+  (defun my-diff-font-lock-setup ()
+    "Enhanced font-lock for diff mode."
+    (font-lock-add-keywords
+     nil
+     '(("^\\+.*" . font-lock-string-face)      ; Added lines
+       ("^\\-.*" . font-lock-warning-face)     ; Removed lines
+       ("^@@.*@@" . font-lock-doc-face)        ; Hunk headers
+       ("^diff.*" . font-lock-function-name-face) ; Diff headers
+       ("^index .*" . font-lock-comment-face)
+       ("{\\+\\([^}]+\\)\\+}" . font-lock-string-face)  ; Capture content between {+ +}
+       ("\\[\\-\\([^]]+\\)\\-\\]" . font-lock-warning-face) ; Capture content between [- -]
+
+       ("{\\+" . font-lock-string-face)           ; Start added
+       ("\\+}" . font-lock-string-face)           ; End added
+       ("\\[-" . font-lock-warning-face)            ; Start removed
+       ("-\\]" . font-lock-warning-face))))
 
   (setq compilation-skip-threshold 1)
   )
