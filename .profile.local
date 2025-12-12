@@ -42,6 +42,8 @@ fi
 
 if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
     PATH="/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/zsh-5.9.0.2-tm5phpzrwwohrsxgo274j32vxioblkqj/bin:${PATH}"
+elif [[ $(hostname) = "a30four" ]]; then
+    PATH="/home/epd/spack/opt/spack/linux-x86_64_v4/zsh-5.9.0.3-226uiwn7hzwqz2sb4x27a5ct7iwk6mdc/bin:${PATH}"
 else
     PATH="/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin:$PATH"
 fi

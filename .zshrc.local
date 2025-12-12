@@ -70,8 +70,8 @@ radian_after_init_hook() {
         EMACS_TERM=xterm-24bits
         alias nwemacs='TERM=xterm-24bits emacs -nw'
     else
-        EMACS_TERM=zterm-24bit
-        alias nwemacs='TERM=xterm-24bit emacs -nw'
+        COLORTERM=truecolor
+	alias nwemacs='emacs -nw'
     fi
 
     if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
@@ -79,6 +79,10 @@ radian_after_init_hook() {
         autoload -U bashcompinit
         bashcompinit
 	. $PROJWORK/cph102/epd/fresh-spack/share/spack/setup-env.sh
+    elif [[ $(hostname) = "a30four" ]]; then
+        autoload -U bashcompinit
+	bashcompinit
+	. /home/epd/spack/share/spack/setup-env.sh
     else
         autoload -U bashcompinit
         bashcompinit
