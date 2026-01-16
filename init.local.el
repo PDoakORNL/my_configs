@@ -227,7 +227,7 @@
            (gptel-make-openai "llama-cpp"
              :stream t
              :protocol "http"
-             :host "localhost:8080"
+             :host "128.219.166.238:8080"
              :models '(quen3))
            (gptel-make-openai "vllm"
              :stream t
