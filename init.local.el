@@ -84,6 +84,9 @@
   (require 'qmcpack-style)
   (require 'dca-style)
   ;;  (require 'mrpapp-style)
+  (radian-use-package lsp-mode
+    :config
+    (setq lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd")  )
   (use-feature cc-mode
     :config
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
@@ -100,17 +103,20 @@
      'c++-mode-hook
      (lambda ()
        (local-set-key (kbd "M-RET") #'c-indent-new-comment-line)
-       (sp-local-pair 'c++-mode "\"" nil :when '(sp-point-before-eol-p))
-       (sp-local-pair 'c++-mode "/*" "*/" :actions '(:rem navigate autoskip) :post-handlers nil)
-       (sp-local-pair 'c++-mode "(" nil :when '(sp-point-before-eol-p))
-       (sp-local-pair 'c++-mode "{" nil :when '(sp-point-before-eol-p))
+       ;; (sp-local-pair 'c++-mode "\"" nil :when '(sp-point-before-eol-p))
+       ;; (sp-local-pair 'c++-mode "/*" "*/" :actions '(:rem navigate autoskip) :post-handlers nil)
+       ;; (sp-local-pair 'c++-mode "(" nil :when '(sp-point-before-eol-p))
+       ;; (sp-local-pair 'c++-mode "{" nil :when
+       ;; '(sp-point-before-eol-p))
+       (smartparens-mode -1)
        (electric-pair-mode -1))
      )
     )
   (radian-use-package lsp-ui
     :bind (("s-g" . #'lsp-ui-peek-find-definitions)
 	   ("s-r" . #'lsp-ui-peek-find-references)
-	   ("s-i" . #'lsp-ui-peek-find-implementation))
+	   ("s-i" . #'lsp-ui-peek-find-implementation)
+           ("s-b" . #'pop-tag-mark))
     )
 
   ;; my lsp related functions
@@ -139,7 +145,7 @@
   (radian-use-package awk-ts-mode
     :straight (:host github :repo "nverno/awk-ts-mode")
     :config (add-to-list 'treesit-language-source-alist
-                         '(awk "https:/github.com/Beaglefoot/tree-sitter-awk"))
+                         '(awk "/home/epd/codes/tree-sitter-awk"))
     )
   ;; (radian-use-package llvm-ts-mode)
   ;; (radian-use-package perl-ts-mode)
@@ -180,7 +186,7 @@
                                    )))
 
   ;; LLM setup for sdgx-server
-  (cond ((string-match "sdgx-server" (system-name)) (straight-use-package 'llm)
+  (cond ((string-match "a30four" (system-name)) (straight-use-package 'llm)
          (radian-use-package ellama
            :ensure t
            :bind ("C-c e" . ellama)
@@ -230,13 +236,18 @@
            (gptel-make-openai "llama-cpp"
              :stream t
              :protocol "http"
-             :host "128.219.166.238:8080"
-             :models '(quen3))
+             :host "127.0.0.1:8049"
+             :models '(Qwen3-Coder-Next))
            (gptel-make-openai "vllm"
              :stream t
              :protocol "http"
              :host "localhost:8000"
-             :models '(NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO))
+             :models '(cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-8bit))
+           (gptel-make-openai "vllm"
+             :stream t
+             :protocol "http"
+             :host "localhost:8000"
+             :models '(cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit))
            (gptel-make-tool
             :name "create-file"
             :function (lambda (path filename content)
