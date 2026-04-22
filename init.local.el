@@ -81,8 +81,11 @@
          (add-to-list 'load-path "/home/epd/DCA-2/tools/emacs"))
         (t (add-to-list 'load-path "/raid/epd/qmcpack/utils/code_tools")
            (add-to-list 'load-path "/raid/epd/DCA-2/tools/emacs")))
-  (require 'qmcpack-style)
-  (require 'dca-style)
+  (when (locate-library "qmcpack-style")
+    (require 'qmcpack-style))
+
+  (when (locate-library "dca-style")
+    (require 'dca-style))
   ;;  (require 'mrpapp-style)
   (radian-use-package lsp-mode
     :config
@@ -95,7 +98,8 @@
 
     ;; This style is only used for languages which do not have
     ;; a more specific style set in `c-default-style'.
-    (setf (map-elt c-default-style 'other) "qmcpack")
+    (when (member '("qmcpack" . "qmcpack-style") c-style-alist)
+      (setf (map-elt c-default-style 'other) "qmcpack"))
     (put 'c-default-style 'safe-local-variable #'stringp)
     ;; (add-to-list 'sp-ignore-modes-list #'c-mode)
     ;; (add-to-list 'sp-ignore-modes-list #'c++-mode)
