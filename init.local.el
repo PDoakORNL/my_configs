@@ -56,9 +56,9 @@
     :config
     (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
     (define-key vterm-mode-map (kbd "<home>")
-                (lambda () (interactive) (vterm-send-string "\033[H")))
+      (lambda () (interactive) (vterm-send-string "\033[H")))
     (define-key vterm-mode-map (kbd "<end>")
-                (lambda () (interactive) (vterm-send-string "\033[F")))
+      (lambda () (interactive) (vterm-send-string "\033[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
     (let* ((vterm-shell-from-env (or (getenv "ZSH_EXEPATH")
@@ -155,7 +155,7 @@
     (cl-loop for char from ?a to ?z
              do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
     )
-  (when (radian-operating-system-p darwin)
+  (when (or (radian-operating-system-p osx) (radian-operating-system-p darwin))
     (setq mac-command-modifier 'control)
     (setq mac-control-modifier 'meta)
     (setq mac-option-modifier 'super)
@@ -176,8 +176,13 @@
                                    (emacs-lisp . t)
                                    )))
 
+  (add-hook 'markdown-mode-hook
+            (lambda ()
+              (setq-local lsp-disabled-clients '(marksman))
+              ))
+
   ;; LLM setup for sdgx-server
-  (cond ((string-match "sdgx-server" (system-name)) (straight-use-package 'llm)
+  (cond ((string-match "mac117825" (system-name)) (straight-use-package 'llm)
          (radian-use-package ellama
            :ensure t
            :bind ("C-c e" . ellama)
@@ -199,8 +204,8 @@
   	           (make-llm-openai-compatible
   	            ;; this model should be pulled to use it
   	            ;; value should be the same as you print in terminal during pull
-  	            :url "http://127.0.0.1:8080"
-                    :chat-model "Qwen3-Coder-480B-A35B-Instruct")))
+  	            :url "http://10.64.200.114:8000"
+                    :chat-model "RedHatAI/gemma-4-31B-it-FP8-block")))
          ;; show ellama context in header line in all buffers
          ;; (ellama-context-header-line-global-mode +1)
          ;; ;; show ellama session id in header line in all buffers
@@ -232,8 +237,8 @@
            (gptel-make-openai "vllm"
              :stream t
              :protocol "http"
-             :host "localhost:8000"
-             :models '(NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO))
+             :host "10.64.200.114:8000"
+             :models '(RedHatAI/Qwen3.6-35B-A3B-NVFP4))
            (gptel-make-tool
             :name "create-file"
             :function (lambda (path filename content)
@@ -350,6 +355,12 @@
        ("-\\]" . font-lock-warning-face))))
 
   (setq compilation-skip-threshold 1)
+  ;; Fallback font for Unicode symbols/subscripts
+  (set-fontset-font "fontset-default"
+                    '(#x2080 . #x209C)  ; subscript range
+                    (font-spec :name "Noto Sans Mono" :size 22)
+                    nil 'append)
+  (set-face-attribute 'default nil :height 140)
   )
 
 
