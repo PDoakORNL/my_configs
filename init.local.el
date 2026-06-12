@@ -20,11 +20,24 @@
 ;; (setq straight-vc-git-default-protocol ssh)
 ;; (setq straight-check-for-modifications ...))
 (radian-local-on-hook before-straight
+  (setq gnutls-trustfiles (quote ("~/.emacs.d/certs/netskope-root.pem" "/etc/ssl/cert.pem")))
+
   (setq straight-recipes-gnu-elpa-use-mirror t)
   ;; (setq straight-check-for-modifications t)
   )
 
 (radian-local-on-hook after-init
+  (when (or (radian-operating-system-p darwin) (radian-operating-system-p macOS))
+    (setq proof-macOS-was-detected-and-key-swap t)
+    (setq mac-command-modifier 'control)
+    (setq mac-control-modifier 'meta)
+    (setq mac-option-modifier 'super)
+    (setq mac-right-option-modifier 'meta)
+    (global-set-key [kp-delete] 'delete-char)
+    (global-set-key [home] 'beginning-of-line-text)
+    (global-set-key [end] 'move-end-of-line) ;; sets fn-delete to be
+    ;; right-delete
+    )
   ;; code that should be run at the end of init, e.g.
   (radian-use-package vertico
     :ensure t
@@ -168,14 +181,6 @@
     (cl-loop for char from ?a to ?z
              do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
     )
-  (when (radian-operating-system-p darwin)
-    (setq mac-command-modifier 'control)
-    (setq mac-control-modifier 'meta)
-    (setq mac-option-modifier 'super)
-    (global-set-key [kp-delete] 'delete-char)
-    (global-set-key [home] 'beginning-of-line-text)
-    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be
-  ;; right-delete
 
   (use-package org
     :bind(:map org-mode-map
@@ -238,20 +243,20 @@
            :bind ("C-c g m" . gptel-menu)
 	   :config
            (gptel-make-openai "llama-cpp"
-             :stream t
-             :protocol "http"
-             :host "127.0.0.1:8049"
-             :models '(Qwen3-Coder-Next))
+                              :stream t
+                              :protocol "http"
+                              :host "127.0.0.1:8049"
+                              :models '(Qwen3-Coder-Next))
            (gptel-make-openai "vllm"
-             :stream t
-             :protocol "http"
-             :host "localhost:8000"
-             :models '(cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-8bit))
+                              :stream t
+                              :protocol "http"
+                              :host "localhost:8000"
+                              :models '(cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-8bit))
            (gptel-make-openai "vllm"
-             :stream t
-             :protocol "http"
-             :host "localhost:8000"
-             :models '(cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit))
+                              :stream t
+                              :protocol "http"
+                              :host "localhost:8000"
+                              :models '(cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit))
            (gptel-make-tool
             :name "create-file"
             :function (lambda (path filename content)

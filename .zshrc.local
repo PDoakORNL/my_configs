@@ -115,6 +115,9 @@ radian_after_init_hook() {
         }
     fi
 
+    if [[ "$OSTYPE" == darwin* ]]; then
+      export PATH="/opt/homebrew/opt/curl/bin:$PATH"
+    fi
     export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     export PATH=~/opt/bin:${PATH}
     source <(fzf --zsh)
