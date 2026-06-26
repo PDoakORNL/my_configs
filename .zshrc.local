@@ -4,6 +4,18 @@
 # function that helps in this task, `vterm_printf`, is defined below.
 
 alias hig="history | grep"
+
+# In some containers the inherited HOST variable is a bind address such as
+# 0.0.0.0. Zsh uses $HOST for prompt escapes like %m, which makes the Radian
+# prompt show epd@0. Prefer the actual container hostname in that case.
+if [[ -z ${RADIAN_HOSTNAME:-} && ( ${HOST:-} == 0.0.0.0 || ${HOST:-} == 0 ) ]]; then
+    if [[ -n ${HOSTNAME:-} ]]; then
+        RADIAN_HOSTNAME=${HOSTNAME%%.*}
+    elif (( $+commands[hostname] )); then
+        RADIAN_HOSTNAME=$(hostname -s 2>/dev/null || hostname 2>/dev/null)
+    fi
+fi
+
 alias githubUp='ssh -fN -L 4444:ssh.github.com:443 login'
 alias summitUp='ssh -fN -L 4447:summit.olcf.ornl.gov:22 login'
 alias condoUp='ssh -fN -L 4445:or-condo-login01.ornl.gov:22 login'
@@ -88,7 +100,13 @@ radian_after_init_hook() {
     else
         autoload -U bashcompinit
         bashcompinit
-	# . /raid/epd/spack/share/spack/setup-env.sh
+        if (( ! $+functions[spack] )); then
+            if [[ -n ${SPACK_ROOT:-} && -f ${SPACK_ROOT}/share/spack/setup-env.sh ]]; then
+                . ${SPACK_ROOT}/share/spack/setup-env.sh
+            elif [[ -f ~/spack/share/spack/setup-env.sh ]]; then
+                . ~/spack/share/spack/setup-env.sh
+            fi
+        fi
     fi
 
     if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
@@ -118,7 +136,11 @@ radian_after_init_hook() {
     if [[ "$OSTYPE" == darwin* ]]; then
       export PATH="/opt/homebrew/opt/curl/bin:$PATH"
     fi
-    export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
+    if [[ -d ~/.local/share/znap/junegunn/fzf/bin ]]; then
+        export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
+    fi
     export PATH=~/opt/bin:${PATH}
-    source <(fzf --zsh)
+    if (( $+commands[fzf] )) && [[ -t 0 ]]; then
+        source <(fzf --zsh)
+    fi
 }

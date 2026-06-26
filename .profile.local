@@ -44,9 +44,31 @@ if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
     PATH="/lustre/orion/cph102/proj-shared/epd/fresh-spack/opt/spack/linux-zen3/zsh-5.9.0.2-tm5phpzrwwohrsxgo274j32vxioblkqj/bin:${PATH}"
 elif [[ $(hostname) = "a30four" ]]; then
     HF_HOME="/scratch/caches/hf"
-else
+elif [ -d "/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin" ]; then
     PATH="/raid/epd/spack/opt/spack/linux-skylake_avx512/zsh-5.9.0.2-a5gtwakb7lxtthuszyqodbbmmyyyzq7p/bin:$PATH"
+elif [ -d "$HOME/spack/bin" ]; then
+    PATH="$HOME/spack/bin:$PATH"
 fi
+
+# Container-provided tools that should survive dotfile startup. In particular,
+# /etc/profile in minimal containers can reset PATH, so put these back if they
+# exist without creating duplicates.
+path_prepend_once() {
+    if [ -n "$1" ] && [ -d "$1" ]; then
+        case ":$PATH:" in
+            *:"$1":*) ;;
+            *) PATH="$1:$PATH" ;;
+        esac
+    fi
+}
+path_prepend_once "$HOME/.cargo/bin"
+path_prepend_once "$HOME/.venv/bin"
+path_prepend_once "$HOME/.local/node/bin"
+path_prepend_once "/app/node_modules/.bin"
+path_prepend_once "$HOME/spack/bin"
+path_prepend_once "$HOME/.local/bin"
+path_prepend_once "$HOME/.pi/agent/bin"
+unset -f path_prepend_once 2>/dev/null || unset path_prepend_once
 
 TERMINFO=$HOME/.terminfo
 
