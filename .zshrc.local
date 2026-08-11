@@ -68,44 +68,41 @@ vterm_prompt_end() {
 # Completely clear the buffer. With this, everything that is not on screen
 # is erased.
 radian_after_init_hook() {
+    local host_name host_domain spack_setup
+    host_name=$(hostname 2>/dev/null || true)
+    host_domain=$(hostname -d 2>/dev/null || true)
+
     # autoload -Uz promptinit
     # promptinit
     # prompt adam1
 
     alias hig="history | grep"
 
-    if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
+    if [[ $host_domain = "frontier.olcf.ornl.gov" ]]; then
         EMACS_TERM=xterm-24bits
         alias nwemacs='TERM=xterm-24bits emacs -nw'
     else
         COLORTERM=truecolor
-	alias nwemacs='emacs -nw'
+        alias nwemacs='emacs -nw'
     fi
 
-    if [[ $(hostname -d) = "frontier.olcf.ornl.gov" ]]; then
-	fpath=( $fpath /etc/zsh_completion.d )
-        autoload -U bashcompinit
-        bashcompinit
-	. $PROJWORK/cph102/epd/fresh-spack/share/spack/setup-env.sh
-    elif [[ $(hostname) = "a30four" ]]; then
+    autoload -U bashcompinit
+    bashcompinit
+
+    if [[ $host_domain = "frontier.olcf.ornl.gov" ]]; then
+        fpath=( $fpath /etc/zsh_completion.d )
+        spack_setup=${PROJWORK:-}/cph102/epd/fresh-spack/share/spack/setup-env.sh
+        [[ -f $spack_setup ]] && . $spack_setup
+    elif [[ $host_name = "a30four" ]]; then
         echo "On a30four"
         fpath+=(~/my_configs/zsh)
-
-        # autoload -Uz compinit && compinit
-        autoload -U bashcompinit
-        bashcompinit
-
-	. /scratch/spack/share/spack/setup-env.sh
-	HF_HOME=/scratch/caches/hf
-    else
-        autoload -U bashcompinit
-        bashcompinit
-        if (( ! $+functions[spack] )); then
-            if [[ -n ${SPACK_ROOT:-} && -f ${SPACK_ROOT}/share/spack/setup-env.sh ]]; then
-                . ${SPACK_ROOT}/share/spack/setup-env.sh
-            elif [[ -f ~/spack/share/spack/setup-env.sh ]]; then
-                . ~/spack/share/spack/setup-env.sh
-            fi
+        [[ -f /scratch/spack/share/spack/setup-env.sh ]] && . /scratch/spack/share/spack/setup-env.sh
+        HF_HOME=/scratch/caches/hf
+    elif (( ! $+functions[spack] )); then
+        if [[ -n ${SPACK_ROOT:-} && -f ${SPACK_ROOT}/share/spack/setup-env.sh ]]; then
+            . ${SPACK_ROOT}/share/spack/setup-env.sh
+        elif [[ -f ~/spack/share/spack/setup-env.sh ]]; then
+            . ~/spack/share/spack/setup-env.sh
         fi
     fi
 
@@ -114,7 +111,7 @@ radian_after_init_hook() {
       PROMPT="${PROMPT}$(printf '%s' '%{$(vterm_prompt_end)%}')"
     fi
 
-    if [[ $(hostname -d) = "sns.gov" ]]; then
+    if [[ $host_domain = "sns.gov" && -f /raid/epd/spack/share/spack/setup-env.sh ]]; then
         . /raid/epd/spack/share/spack/setup-env.sh
     fi
 
@@ -140,7 +137,8 @@ radian_after_init_hook() {
         export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
     fi
     export PATH=~/opt/bin:${PATH}
+    export PATH=/usr/local/go/bin:${PATH}
     if (( $+commands[fzf] )) && [[ -t 0 ]]; then
-        source <(fzf --zsh)
+        source <(fzf --zsh 2>/dev/null)
     fi
 }
