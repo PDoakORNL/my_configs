@@ -77,9 +77,14 @@
                 (lambda () (interactive) (vterm-send-string "\033[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
-    (let* ((vterm-shell-from-env (or (getenv "ZSH_EXEPATH")
-                                     (getenv "SHELL"))))
-      (setq vterm-shell vterm-shell-from-env))
+    ;; Containers may start Emacs without SHELL/ZSH_EXEPATH.  Do not
+    ;; replace vterm's usable default with nil in that case.
+    (setq vterm-shell
+          (or (getenv "ZSH_EXEPATH")
+              (getenv "SHELL")
+              (executable-find "zsh")
+              shell-file-name
+              "/bin/sh"))
     (setq vterm-max-scrollback 100000)
     (let* ((vterm-term-from-emacs-term (or (getenv "EMACS_TERM")
                                            "xterm-256color")))
@@ -164,9 +169,13 @@
   ;; (radian-use-package ts-mode)
   (radian-use-package awk-ts-mode
     :straight (:host github :repo "nverno/awk-ts-mode")
-    :config (add-to-list 'treesit-language-source-alist
-                         '(awk "/home/epd/codes/tree-sitter-awk"))
-    )
+    ;; Use a cloneable upstream recipe, not a directory from a prior host.
+    ;; Run `treesit-install-language-grammar' once to build awk.so under
+    ;; ~/.emacs.d/tree-sitter/ after a new-container bootstrap.
+    :init
+    (require 'treesit)
+    (add-to-list 'treesit-language-source-alist
+                 '(awk "https://github.com/Beaglefoot/tree-sitter-awk")))
   ;; (radian-use-package llvm-ts-mode)
   ;; (radian-use-package perl-ts-mode)
   ;; (radian-use-package julia-ts-mode
