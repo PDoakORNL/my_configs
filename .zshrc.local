@@ -68,10 +68,16 @@ vterm_prompt_end() {
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
 }
 
+# znap is initialized by Radian after this file is sourced, then calls this
+# hook. Cloning here ensures the fzf installer is available on the first shell.
+radian_znap_hook() {
+    znap clone junegunn/fzf
+}
+
 # Completely clear the buffer. With this, everything that is not on screen
 # is erased.
 radian_after_init_hook() {
-    local host_name host_domain spack_setup
+    local host_name host_domain spack_setup fzf_dir
     host_name=$(hostname 2>/dev/null || true)
     host_domain=$(hostname -d 2>/dev/null || true)
 
@@ -134,11 +140,27 @@ radian_after_init_hook() {
     if [[ "$OSTYPE" == darwin* ]]; then
       export PATH="/opt/homebrew/opt/curl/bin:$PATH"
     fi
-    if [[ -d ~/.local/share/znap/junegunn/fzf/bin ]]; then
-        export PATH=~/.local/share/znap/junegunn/fzf/bin:$PATH
-    fi
     export PATH=~/opt/bin:${PATH}
     export PATH=/usr/local/go/bin:${PATH}
+
+    fzf_dir=$HOME/.local/share/znap/junegunn/fzf
+    if [[ -d $fzf_dir ]]; then
+        export PATH=$fzf_dir/bin:$PATH
+
+        # The upstream installer knows the release version and installs only
+        # the binary, leaving this configuration as the single source of the
+        # zsh bindings. It downloads a matching release binary and falls back
+        # to Go when no prebuilt binary is available.
+        if [[ ! -x $fzf_dir/bin/fzf ]]; then
+            if (( $+commands[bash] )) && [[ -x $fzf_dir/install ]]; then
+                command bash "$fzf_dir/install" --bin ||
+                    print -u2 'fzf installation failed; rerun the installer after resolving its prerequisites.'
+            else
+                print -u2 'fzf installation requires bash and the fzf install script.'
+            fi
+        fi
+    fi
+
     if (( $+commands[fzf] )) && [[ -t 0 ]]; then
         source <(fzf --zsh 2>/dev/null)
     fi
