@@ -24,6 +24,7 @@
 
   (setq straight-recipes-gnu-elpa-use-mirror t)
   ;; (setq straight-check-for-modifications t)
+  (setq straight-vc-git-default-protocol 'ssh)
   )
 
 (radian-local-on-hook after-init
@@ -110,7 +111,10 @@
   ;;  (require 'mrpapp-style)
   (radian-use-package lsp-mode
     :config
-    (setq lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd")  )
+    ;; Do not create thousands of Emacs file-notify watches for large
+    ;; workspaces such as /workspace/qmcpack (or prompt to approve them).
+    (setq lsp-enable-file-watchers nil
+          lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd"))
   (use-feature cc-mode
     :config
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
