@@ -50,5 +50,6 @@ mkdir -p "$HOME/.emacs.d"
 backup_and_link "$HOME/radian/emacs/early-init.el"         "$HOME/.emacs.d/early-init.el"
 backup_and_link "$HOME/radian/emacs/init.el"               "$HOME/.emacs.d/init.el"
 backup_and_link "$HOME/radian/emacs/radian.el"             "$HOME/.emacs.d/radian.el"
+backup_and_link "$HOME/my_configs/init.local.el"          "$HOME/.emacs.d/init.local.el"
 
 echo "Setup complete."

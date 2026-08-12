@@ -66,6 +66,9 @@
   (setq auto-save-default t)
   (setq create-lockfiles t)
   (radian-use-package vterm
+    :init
+    ;; Compile the native module automatically on a fresh bootstrap.
+    (setq vterm-always-compile-module t)
     :config
     (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
     (define-key vterm-mode-map (kbd "<home>")
