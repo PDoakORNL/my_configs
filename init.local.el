@@ -115,6 +115,19 @@
     ;; workspaces such as /workspace/qmcpack (or prompt to approve them).
     (setq lsp-enable-file-watchers nil
           lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd"))
+
+  ;; Radian starts LSP for most programming modes.  The installed Perl
+  ;; interpreter lacks Perl::LanguageServer, so its server exits immediately
+  ;; and lsp-mode repeatedly offers to restart it.  Disable both Perl clients
+  ;; and prevent Radian from requesting LSP for Perl buffers in the first place.
+  (with-eval-after-load 'lsp-mode
+    (dolist (client '(perl-language-server perlnavigator))
+      (add-to-list 'lsp-disabled-clients client)))
+  (defun my/radian-disable-perl-lsp ()
+    "Keep Radian from automatically starting LSP in Perl buffers."
+    (setq-local radian-lsp-disable t))
+  (add-hook 'perl-mode-hook #'my/radian-disable-perl-lsp)
+  (add-hook 'cperl-mode-hook #'my/radian-disable-perl-lsp)
   (use-feature cc-mode
     :config
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
@@ -212,47 +225,6 @@
 
   ;; LLM setup for sdgx-server
   (cond ((string-match "a30four" (system-name)) (straight-use-package 'llm)
-         (radian-use-package ellama
-           :ensure t
-           :bind ("C-c e" . ellama)
-           ;; send last message in chat buffer with C-c C-c
-           :hook (org-ctrl-c-ctrl-c-final . ellama-chat-send-last-message)
-           :init
-           ;; setup key bindings
-           ;; (setopt ellama-keymap-prefix "C-c e")
-           ;; language you want ellama to translate to
-           (setopt ellama-language "English")
-           ;; customize display buffer behaviour
-           ;; see ~(info "(elisp) Buffer Display Action Functions")~
-           (setopt ellama-chat-display-action-function #'display-buffer-full-frame)
-           (setopt ellama-instant-display-action-function #'display-buffer-at-bottom)
-           :config
-           ;; could be llm-openai for example                                                       (require 'llm-openai)
-           (require 'llm-openai)
-           (setopt ellama-provider
-  	           (make-llm-openai-compatible
-  	            ;; this model should be pulled to use it
-  	            ;; value should be the same as you print in terminal during pull
-  	            :url "http://127.0.0.1:8080"
-                    :chat-model "Qwen3-Coder-480B-A35B-Instruct")))
-         ;; show ellama context in header line in all buffers
-         ;; (ellama-context-header-line-global-mode +1)
-         ;; ;; show ellama session id in header line in all buffers
-         ;; (ellama-session-header-line-global-mode +1))
-	 ;;  +1))
-         ;; (radian-use-package lsp-bridge
-         ;;   :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-         ;;                          :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-         ;;                          :build (:not compile))
-         ;;   :init
-         ;;   (global-lsp-bridge-mode)
-         ;;   :config
-         ;;   (setq lsp-bridge-enable-llm t)  ; Critical!
-         ;;   (setq lsp-bridge-llm-backend "codegeex") ; Or "codellama", "qwen", etc.
-         ;;   (setq lsp-bridge-semantic-tokens-enable t)
-         ;;   (setq lsp-bridge-semantic-tokens-max-file-size 1000)
-         ;;   (setq lsp-bridge-chat-max-tokens 8000))
-
 	 (straight-use-package 'gptel)
 	 (radian-use-package gptel
 	   :straight (:host github :repo "karthink/gptel")
