@@ -14,3 +14,4 @@ lb = !git reflog show --pretty=format:'%gs ~ %gd' --date=relative | grep 'checko
 	defaultBranch = develop
 [core]
         excludesfile = ~/.gitexclude.local
+	fsmonitor = false
