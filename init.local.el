@@ -130,6 +130,24 @@
   (add-hook 'cperl-mode-hook #'my/radian-disable-perl-lsp)
   (use-feature cc-mode
     :config
+    (defun my/qmcpack-c-do-auto-fill ()
+      "Fill QMCPACK block comments while preserving their leading asterisk."
+      (let ((fill-prefix
+             (or (save-excursion
+                   (beginning-of-line)
+                   (when (looking-at "\\([ \t]*\\)\\*\\(?:  ?\\)")
+                     (concat (match-string 1) "*  ")))
+                 fill-prefix)))
+        (c-do-auto-fill)))
+
+    (defun my/qmcpack-c-comment-formatting ()
+      "Use QMCPACK's source width when filling C-family comments."
+      (when (equal c-indentation-style "qmcpack")
+        (setq-local fill-column 100)
+        (setq-local auto-fill-function #'my/qmcpack-c-do-auto-fill)))
+
+    (add-hook 'c-mode-common-hook #'my/qmcpack-c-comment-formatting)
+
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
       :override #'c-update-modeline
       "Unconditionally inhibit CC submode indicators in the mode lighter.")
@@ -144,6 +162,8 @@
     (add-hook
      'c++-mode-hook
      (lambda ()
+       ;; CC Mode initializes `fill-column' to 70; QMCPACK source permits 100.
+       (setq-local fill-column 100)
        (local-set-key (kbd "M-RET") #'c-indent-new-comment-line)
        ;; (sp-local-pair 'c++-mode "\"" nil :when '(sp-point-before-eol-p))
        ;; (sp-local-pair 'c++-mode "/*" "*/" :actions '(:rem navigate autoskip) :post-handlers nil)
