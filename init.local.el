@@ -114,7 +114,7 @@
   (radian-use-package awk-ts-mode
     :straight (:host github :repo "nverno/awk-ts-mode")
     :config (add-to-list 'treesit-language-source-alist
-                         '(awk "https:/github.com/Beaglefoot/tree-sitter-awk"))
+                         '(awk "git@github.com:Beaglefoot/tree-sitter-awk.git"))
     )
   ;; (radian-use-package llvm-ts-mode)
   ;; (radian-use-package perl-ts-mode)
