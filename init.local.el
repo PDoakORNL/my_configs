@@ -204,15 +204,22 @@
       (compilation-start cmd nil (lambda (_) "*Clang AST*"))))
 
   ;; (radian-use-package ts-mode)
+  ;; Straight/use-package can load awk-ts-mode while compiling its declaration.
+  (eval-and-compile
+    (when (radian-enabled-p 'awk-ts-mode)
+      (unless (and (require 'treesit nil t) (treesit-available-p))
+        (error "AWK grammar bootstrap requires Emacs tree-sitter support"))
+      (add-to-list 'treesit-language-source-alist
+                   '(awk "https://github.com/Beaglefoot/tree-sitter-awk"))
+      (unless (treesit-language-available-p 'awk)
+        (condition-case err
+            (treesit-install-language-grammar 'awk)
+          (error (error "AWK grammar installation failed: %s"
+                        (error-message-string err))))
+        (unless (treesit-language-available-p 'awk)
+          (error "AWK grammar is unavailable after installation")))))
   (radian-use-package awk-ts-mode
-    :straight (:host github :repo "nverno/awk-ts-mode")
-    ;; Use a cloneable upstream recipe, not a directory from a prior host.
-    ;; Run `treesit-install-language-grammar' once to build awk.so under
-    ;; ~/.emacs.d/tree-sitter/ after a new-container bootstrap.
-    :init
-    (require 'treesit)
-    (add-to-list 'treesit-language-source-alist
-                 '(awk "https://github.com/Beaglefoot/tree-sitter-awk")))
+    :straight (:host github :repo "nverno/awk-ts-mode"))
   ;; (radian-use-package llvm-ts-mode)
   ;; (radian-use-package perl-ts-mode)
   ;; (radian-use-package julia-ts-mode
