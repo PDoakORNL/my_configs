@@ -20,11 +20,25 @@
 ;; (setq straight-vc-git-default-protocol ssh)
 ;; (setq straight-check-for-modifications ...))
 (radian-local-on-hook before-straight
+  (setq gnutls-trustfiles (quote ("~/.emacs.d/certs/netskope-root.pem" "/etc/ssl/cert.pem")))
+
   (setq straight-recipes-gnu-elpa-use-mirror t)
   ;; (setq straight-check-for-modifications t)
+  (setq straight-vc-git-default-protocol 'ssh)
   )
 
 (radian-local-on-hook after-init
+  (when (or (radian-operating-system-p darwin) (radian-operating-system-p macOS))
+    (setq proof-macOS-was-detected-and-key-swap t)
+    (setq mac-command-modifier 'control)
+    (setq mac-control-modifier 'meta)
+    (setq mac-option-modifier 'super)
+    (setq mac-right-option-modifier 'meta)
+    (global-set-key [kp-delete] 'delete-char)
+    (global-set-key [home] 'beginning-of-line-text)
+    (global-set-key [end] 'move-end-of-line) ;; sets fn-delete to be
+    ;; right-delete
+    )
   ;; code that should be run at the end of init, e.g.
   (radian-use-package vertico
     :ensure t
@@ -53,6 +67,9 @@
   (setq auto-save-default t)
   (setq create-lockfiles t)
   (radian-use-package vterm
+    :init
+    ;; Compile the native module automatically on a fresh bootstrap.
+    (setq vterm-always-compile-module t)
     :config
     (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
     (define-key vterm-mode-map (kbd "<home>")
@@ -61,9 +78,14 @@
                 (lambda () (interactive) (vterm-send-string "\033[F")))
     (setq vterm-copy-exclude-prompt t)
     (setq vterm-copy-mode-remove-fake-newlines t)
-    (let* ((vterm-shell-from-env (or (getenv "ZSH_EXEPATH")
-                                     (getenv "SHELL"))))
-      (setq vterm-shell vterm-shell-from-env))
+    ;; Containers may start Emacs without SHELL/ZSH_EXEPATH.  Do not
+    ;; replace vterm's usable default with nil in that case.
+    (setq vterm-shell
+          (or (getenv "ZSH_EXEPATH")
+              (getenv "SHELL")
+              (executable-find "zsh")
+              shell-file-name
+              "/bin/sh"))
     (setq vterm-max-scrollback 100000)
     (let* ((vterm-term-from-emacs-term (or (getenv "EMACS_TERM")
                                            "xterm-256color")))
@@ -89,9 +111,43 @@
   ;;  (require 'mrpapp-style)
   (radian-use-package lsp-mode
     :config
-    (setq lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd")  )
+    ;; Do not create thousands of Emacs file-notify watches for large
+    ;; workspaces such as /workspace/qmcpack (or prompt to approve them).
+    (setq lsp-enable-file-watchers nil
+          lsp-clangd-binary-path "/home/epd/spack/opt/spack/linux-x86_64_v4/llvm-21.1.4-zptjnyy3jdo5reh2blr546ffzwllcxdg/bin/clangd"))
+
+  ;; Radian starts LSP for most programming modes.  The installed Perl
+  ;; interpreter lacks Perl::LanguageServer, so its server exits immediately
+  ;; and lsp-mode repeatedly offers to restart it.  Disable both Perl clients
+  ;; and prevent Radian from requesting LSP for Perl buffers in the first place.
+  (with-eval-after-load 'lsp-mode
+    (dolist (client '(perl-language-server perlnavigator))
+      (add-to-list 'lsp-disabled-clients client)))
+  (defun my/radian-disable-perl-lsp ()
+    "Keep Radian from automatically starting LSP in Perl buffers."
+    (setq-local radian-lsp-disable t))
+  (add-hook 'perl-mode-hook #'my/radian-disable-perl-lsp)
+  (add-hook 'cperl-mode-hook #'my/radian-disable-perl-lsp)
   (use-feature cc-mode
     :config
+    (defun my/qmcpack-c-do-auto-fill ()
+      "Fill QMCPACK block comments while preserving their leading asterisk."
+      (let ((fill-prefix
+             (or (save-excursion
+                   (beginning-of-line)
+                   (when (looking-at "\\([ \t]*\\)\\*\\(?:  ?\\)")
+                     (concat (match-string 1) "*  ")))
+                 fill-prefix)))
+        (c-do-auto-fill)))
+
+    (defun my/qmcpack-c-comment-formatting ()
+      "Use QMCPACK's source width when filling C-family comments."
+      (when (equal c-indentation-style "qmcpack")
+        (setq-local fill-column 100)
+        (setq-local auto-fill-function #'my/qmcpack-c-do-auto-fill)))
+
+    (add-hook 'c-mode-common-hook #'my/qmcpack-c-comment-formatting)
+
     (radian-defadvice radian--advice-inhibit-c-submode-indicators (&rest _)
       :override #'c-update-modeline
       "Unconditionally inhibit CC submode indicators in the mode lighter.")
@@ -106,6 +162,8 @@
     (add-hook
      'c++-mode-hook
      (lambda ()
+       ;; CC Mode initializes `fill-column' to 70; QMCPACK source permits 100.
+       (setq-local fill-column 100)
        (local-set-key (kbd "M-RET") #'c-indent-new-comment-line)
        ;; (sp-local-pair 'c++-mode "\"" nil :when '(sp-point-before-eol-p))
        ;; (sp-local-pair 'c++-mode "/*" "*/" :actions '(:rem navigate autoskip) :post-handlers nil)
@@ -148,9 +206,13 @@
   ;; (radian-use-package ts-mode)
   (radian-use-package awk-ts-mode
     :straight (:host github :repo "nverno/awk-ts-mode")
-    :config (add-to-list 'treesit-language-source-alist
-                         '(awk "/home/epd/codes/tree-sitter-awk"))
-    )
+    ;; Use a cloneable upstream recipe, not a directory from a prior host.
+    ;; Run `treesit-install-language-grammar' once to build awk.so under
+    ;; ~/.emacs.d/tree-sitter/ after a new-container bootstrap.
+    :init
+    (require 'treesit)
+    (add-to-list 'treesit-language-source-alist
+                 '(awk "https://github.com/Beaglefoot/tree-sitter-awk")))
   ;; (radian-use-package llvm-ts-mode)
   ;; (radian-use-package perl-ts-mode)
   ;; (radian-use-package julia-ts-mode
@@ -168,14 +230,6 @@
     (cl-loop for char from ?a to ?z
              do (define-key input-decode-map (format "\e[1;P%c" char) (kbd (format "s-%c" char))))
     )
-  (when (radian-operating-system-p darwin)
-    (setq mac-command-modifier 'control)
-    (setq mac-control-modifier 'meta)
-    (setq mac-option-modifier 'super)
-    (global-set-key [kp-delete] 'delete-char)
-    (global-set-key [home] 'beginning-of-line-text)
-    (global-set-key [end] 'move-end-of-line)) ;; sets fn-delete to be
-  ;; right-delete
 
   (use-package org
     :bind(:map org-mode-map
@@ -191,67 +245,26 @@
 
   ;; LLM setup for sdgx-server
   (cond ((string-match "a30four" (system-name)) (straight-use-package 'llm)
-         (radian-use-package ellama
-           :ensure t
-           :bind ("C-c e" . ellama)
-           ;; send last message in chat buffer with C-c C-c
-           :hook (org-ctrl-c-ctrl-c-final . ellama-chat-send-last-message)
-           :init
-           ;; setup key bindings
-           ;; (setopt ellama-keymap-prefix "C-c e")
-           ;; language you want ellama to translate to
-           (setopt ellama-language "English")
-           ;; customize display buffer behaviour
-           ;; see ~(info "(elisp) Buffer Display Action Functions")~
-           (setopt ellama-chat-display-action-function #'display-buffer-full-frame)
-           (setopt ellama-instant-display-action-function #'display-buffer-at-bottom)
-           :config
-           ;; could be llm-openai for example                                                       (require 'llm-openai)
-           (require 'llm-openai)
-           (setopt ellama-provider
-  	           (make-llm-openai-compatible
-  	            ;; this model should be pulled to use it
-  	            ;; value should be the same as you print in terminal during pull
-  	            :url "http://127.0.0.1:8080"
-                    :chat-model "Qwen3-Coder-480B-A35B-Instruct")))
-         ;; show ellama context in header line in all buffers
-         ;; (ellama-context-header-line-global-mode +1)
-         ;; ;; show ellama session id in header line in all buffers
-         ;; (ellama-session-header-line-global-mode +1))
-	 ;;  +1))
-         ;; (radian-use-package lsp-bridge
-         ;;   :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-         ;;                          :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-         ;;                          :build (:not compile))
-         ;;   :init
-         ;;   (global-lsp-bridge-mode)
-         ;;   :config
-         ;;   (setq lsp-bridge-enable-llm t)  ; Critical!
-         ;;   (setq lsp-bridge-llm-backend "codegeex") ; Or "codellama", "qwen", etc.
-         ;;   (setq lsp-bridge-semantic-tokens-enable t)
-         ;;   (setq lsp-bridge-semantic-tokens-max-file-size 1000)
-         ;;   (setq lsp-bridge-chat-max-tokens 8000))
-
 	 (straight-use-package 'gptel)
 	 (radian-use-package gptel
 	   :straight (:host github :repo "karthink/gptel")
            :bind ("C-c g m" . gptel-menu)
 	   :config
            (gptel-make-openai "llama-cpp"
-             :stream t
-             :protocol "http"
-             :host "127.0.0.1:8049"
-             :models '(Qwen3-Coder-Next))
+                              :stream t
+                              :protocol "http"
+                              :host "127.0.0.1:8049"
+                              :models '(Qwen3-Coder-Next))
            (gptel-make-openai "vllm"
-             :stream t
-             :protocol "http"
-             :host "localhost:8000"
-             :models '(cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-8bit))
+                              :stream t
+                              :protocol "http"
+                              :host "localhost:8000"
+                              :models '(cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-8bit))
            (gptel-make-openai "vllm"
-             :stream t
-             :protocol "http"
-             :host "localhost:8000"
-             :models '(cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit))
+                              :stream t
+                              :protocol "http"
+                              :host "localhost:8000"
+                              :models '(cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit))
            (gptel-make-tool
             :name "create-file"
             :function (lambda (path filename content)
