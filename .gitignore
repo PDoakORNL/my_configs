@@ -2,6 +2,7 @@
 *.aux
 .DS_Store
 /build_*/
+/build/
 # Eclipse IDE
 .cproject
 .project
